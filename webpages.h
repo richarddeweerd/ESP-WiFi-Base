@@ -696,6 +696,17 @@ void handleInstall_Old() {
 
 void handleInstall() 
 {
+  #define pageDevicename 1
+  #define pageAccount 2
+  #define pageWifi 3
+  #define pageDhcp 4
+  #define pageNetwork 5
+  #define pageSave 6
+  
+  
+  #define pageWifiScan 101
+  #define pageWifiLogin 102
+  
   digitalWrite ( led, 0 );
   int page = webServer.arg("page").toInt();
   int lastpage = 6;
@@ -707,7 +718,11 @@ void handleInstall()
   if (webServer.method() == HTTP_POST)
   {
     //save action
-    if (page == 2)
+    page--;
+    if (page == 0){
+      page++;
+    }
+    else if (page == pageDevicename)
     {
       //save device name
       String devname = webServer.arg("devicename");
@@ -734,16 +749,13 @@ void handleInstall()
         }        
       }
 
-      if (errorfound)
+      if (!errorfound)
       {
-        page--;
-      }
-      else
-      {
+        page++;
         config.setDevicename(devname);
       }
     }
-    else if (page == 3)
+    else if (page == pageAccount)
     {
       //save user acount
       String usrname = webServer.arg("username");
@@ -789,21 +801,13 @@ void handleInstall()
             errorfound = true;
         }
         if (!errorfound){
+          config.setUsername(usrname);
+          config.setUserpass(pwd1);
           page = 101;
         }
-      }
-      
-      if (errorfound)
-      {
-        page--;
-      }
-      else
-      {
-        config.setUsername(usrname);
-        config.setUserpass(pwd1);
-      }
+      }      
     }
-    else if (page == 5)
+    else if (page == pageWifi)
     {
       //save
       WiFi.mode(WIFI_AP_STA);
@@ -816,17 +820,29 @@ void handleInstall()
       WiFi.begin(_ssid, _pass);
       page = 102;
     }
+    else if (page == pageDhcp)
+    {
+      page++;
+    }
+    else if (page == pageNetwork)
+    {
+      page++;
+    }
+    else if (page == pageSave)
+    {
+      
+    }
   }
 
 
-  if (page == 102)
+  if (page == pageWifiLogin)
   {
     //connection to wifi
     if (WiFi.status() == 6)
     {
       //still connecting
       String content = F("<h1>Connection to Wifi..</h1>");
-      message = buildInstallPage(htmlHead("Install - Step 4", 1, "/install?page=102" ),page,lastpage ,content, errormsg, false, false, false);    
+      message = buildInstallPage(htmlHead("Install - Step 4", 1, "/install?page=" + String(pageWifiLogin) ),page,lastpage ,content, errormsg, false, false, false);    
 
     } 
     else if (WiFi.status() == 3)
@@ -854,7 +870,7 @@ void handleInstall()
   }
 
 
-  if (page == 101)    
+  if (page == pageWifiScan)    
   {
     // Wifi scanning
     
@@ -874,15 +890,15 @@ void handleInstall()
       //wifiscan in progress
       String content = F("<h1>Wifi scan in progress..</h1>");
       
-      message = buildInstallPage(htmlHead("Install - Step 3", 1, "/install?page=101" ),page,lastpage ,content, errormsg, false, false, false);    
+      message = buildInstallPage(htmlHead("Install - Step 3", 1, "/install?page=" + String(pageWifiScan) ),page,lastpage ,content, errormsg, false, false, false);    
 
     } 
     else if (WiFi.scanComplete() == 0)
     {
       //wifiscan complete no networks found
 
-      String content = F("No networks in range <a href =\"/install?page=101&wifirefresh=1\">Refresh Wifi networks. </a>");
-      message = buildInstallPage(htmlHead("Install - Step 3"),page,lastpage ,content, errormsg, false, false, false);    
+      String content = "No networks in range <a href =\"/install?page=" + String(pageWifiScan) + "&wifirefresh=1\">Refresh Wifi networks. </a>";
+      message = buildInstallPage(htmlHead("Install - Step " + String(pageWifi)),pageWifi,lastpage ,content, errormsg, false, false, false);    
 
     } 
     else 
@@ -890,36 +906,36 @@ void handleInstall()
       //wifiscan complete networks found, next page
       
       String content = F("Networks found, processing please wait.");
-      message = buildInstallPage(htmlHead("Install - Step 3", 1, "/install?page=3"),page,lastpage ,content, errormsg, false, false, false);    
+      message = buildInstallPage(htmlHead("Install - Step " + String(pageWifi), 1, "/install?page=" + String(pageWifi) ),pageWifi,lastpage ,content, errormsg, false, false, false);    
     }
   } 
 
 
 
-  if (page == 6)
+  if (page == pageSave)
   {
     //Save and reboot message
     String content = F("<h1>Save and reboot</h1>");
-    message = buildInstallPage(htmlHead("Install - Step 6"),page,lastpage ,content, errormsg);    
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageSave)),pageSave,lastpage ,content, errormsg, false, false, true);    
   }  
 
-  if (page == 5)
+  if (page == pageNetwork)
   {
     //Ipconfig
     String content = F("<h1>Ipconfig page..</h1>");
-    message = buildInstallPage(htmlHead("Install - Step 5"),page,lastpage ,content, errormsg);
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageNetwork)),pageNetwork,lastpage ,content, errormsg);
   }  
 
-  if (page == 4)
+  if (page == pageDhcp)
   {
     //dhcp question
     String content = F("<h1>Dhcp page..</h1>");
-    message = buildInstallPage(htmlHead("Install - Step 4"),page,lastpage ,content, errormsg);
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageDhcp)),pageDhcp,lastpage ,content, errormsg);
 
   }  
   
 
-  if (page == 3)
+  if (page == pageWifi)
   {
     // Page to enter wifi configuration
     String content = F("Wifi settings");
@@ -951,11 +967,11 @@ void handleInstall()
     content += F("</td></tr></table>");
     content += F("<a href =\"/install?page=101&wifirefresh=1\">Refresh Wifi networks. </a>");
     
-    message = buildInstallPage(htmlHead("Install - Step 3"),page ,lastpage ,content, errormsg);    
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageWifi)),page ,lastpage ,content, errormsg);    
   }
   
   
-  if (page == 2)
+  if (page == pageAccount)
   {
     //Account name and password
     String content = F("This is the account needed to change your settings later.<br><br>");
@@ -979,10 +995,10 @@ void handleInstall()
     
     content += F("</table>\n");
 
-    message = buildInstallPage(htmlHead("Install - Step 2"),page ,lastpage ,content, errormsg);
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageAccount)),pageAccount ,lastpage ,content, errormsg);
   }
 
-  if (page == 1)
+  if (page == pageDevicename)
   {
     // Device name
     
@@ -996,9 +1012,8 @@ void handleInstall()
     content += F("</tr>\n");
     content += F("</table>\n");
 
-    message = buildInstallPage(htmlHead("Install - Step 1"),page ,lastpage ,content, errormsg );
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageDevicename)),pageDevicename ,lastpage ,content, errormsg );
   }
-
 
   if (page == 0)
   {
