@@ -25,6 +25,9 @@ void EspConfig::init(){
     gw = readIp("gateway");
     ns0 = readIp("dns0");
     ns1 = readIp("dns1");
+    autodst=readBool("autodst");
+    timezone=readInt("timezone");
+    dstoffset=readInt("dst");
   } else{
     readError = true;
   }
@@ -34,9 +37,6 @@ void EspConfig::init(){
     Serial.println(F("Error reading config files."));
     createConfig();
   }
-
-  //createConfig();
-
 }
 
 
@@ -48,8 +48,10 @@ void EspConfig::createConfig(){
   setUsername(default_username);
   setUserpass("");
   setNtpServer(default_ntp);
-
-  setDhcp(true);  
+  setAutoDst(true);
+  setDhcp(true);
+  setDst(3600);
+  setTimeZone(3600);
   setIpAddress({0, 0, 0, 0});
   setSubnet({0, 0, 0, 0});
   setGateway({0, 0, 0, 0});
@@ -66,6 +68,105 @@ void EspConfig::setVersion(int _value){
 void EspConfig::setDevicename(String _value){
   _value.toCharArray(devicename, sizeof(devicename));
   writeStr("devicename", _value);
+}
+
+byte EspConfig::checkDevicename(String _value){
+  //check if name is valid
+  //errorcodes:
+  //
+  // 0 = Ok
+  // 1 = illegal character
+  // 2 = name too short
+  // 3 = name too long
+
+  #define minlen 1
+  #define maxlen 32
+  
+  bool errorfound = false;
+  for (byte i = 0; i < _value.length(); i++) {    
+    if (!isAlphaNumeric(_value.charAt(i))) {
+      // not alpha numeric
+      if (i > 0) {
+
+        if ((_value.charAt(i) != '-') && (_value.charAt(i) != '_')) {
+          errorfound = true;
+        }       
+      }
+      else {
+        errorfound = true;
+      }
+    }
+  }
+  if (errorfound) {
+    return 1;
+  } else {
+    if (_value.length() < minlen) {
+      return 2;
+    } else {
+      if (_value.length() > maxlen) {  
+        return 3;
+      } 
+    }
+  }
+  return 0;
+}
+
+byte EspConfig::checkUsername(String _value){
+  //check if username is valid
+  //errorcodes:
+  //
+  // 0 = Ok
+  // 1 = illegal character
+  // 2 = name too short
+  // 3 = name too long
+  
+  #define minlen 3
+  #define maxlen 20
+
+  bool errorfound = false;
+  for (byte i = 0; i < _value.length(); i++) {    
+    if (!isAlphaNumeric(_value.charAt(i))) {
+      errorfound = true;
+    }
+  }
+  if (errorfound) {
+    return 1;
+  } else {
+    if (_value.length() < minlen) {
+      return 2;
+    } else {
+      if (_value.length() > maxlen) {  
+        return 3;
+      } 
+    }
+  }
+  return 0;  
+}
+
+byte EspConfig::checkUserpass(String _value, String _value2){
+  //check if passwords are valid
+  //errorcodes:
+  //
+  // 0 = Ok
+  // 1 = passwords are not the same
+  // 2 = passwords too short
+  // 3 = passwords too long
+  
+  #define minlen 3
+  #define maxlen 20
+
+  bool errorfound = false;
+  if (_value != _value2) {
+    return 1;
+  }
+  if (_value.length() < minlen) {
+    return 2;
+  } else {
+    if (_value.length() > maxlen) {  
+      return 3;
+    } 
+  }
+  return 0;  
 }
 
 void EspConfig::setUsername(String _value){
@@ -87,6 +188,23 @@ void EspConfig::setDhcp(bool _value){
   dhcp = _value;
   writeBool("dhcp", _value);
 }
+
+void EspConfig::setAutoDst(bool _value){
+  autodst = _value;
+  writeBool("autodst", _value);
+}
+
+
+void EspConfig::setDst(int _value){
+  dstoffset = _value;
+  writeInt("dst", _value);
+}
+
+void EspConfig::setTimeZone(int _value){
+  timezone= _value;
+  writeInt("timezone", _value);
+}
+
 
 void EspConfig::setIpAddress(IPAddress _value){
   for (byte i = 0; i < 4; i++ ){

@@ -2,29 +2,33 @@
 
 #include <ESP8266WebServer.h>
 #include <WiFiUdp.h>
-#include <time.h>                       // time() ctime()
-#include <sys/time.h>                   // struct timeval
-#include <coredecls.h>                  // settimeofday_cb()
+#include <TimeLib.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+
 #include <ArduinoJson.h>
 #include "FS.h"
 #include "EspConfig.h"
 
 #include "config.h"
 #include "globals.h"
+#include "globalFunctions.h"
+#include "timeFunctions.h"
 #include "webtools.h"
 #include "webpages.h"
+#include "update.h"
 
 
-#define TZ              1       // (utc+) TZ in hours
-#define DST_MN          60      // use 60mn for summer time in some countries
-#define TZ_MN           ((TZ)*60)
-#define TZ_SEC          ((TZ)*3600)
-#define DST_SEC         ((DST_MN)*60)
+//#define TZ              1       // (utc+) TZ in hours
+//#define DST_MN          60      // use 60mn for summer time in some countries
+//#define TZ_MN           ((TZ)*60)
+//#define TZ_SEC          ((TZ)*3600)
+//#define DST_SEC         ((DST_MN)*60)
 
 
-timeval tv;
+//timeval tv;
 
-time_t now;
+//time_t now;
 
 
 void setup()
@@ -102,35 +106,46 @@ void setup()
     Serial.println(F("Access point started"));
     WiFi.scanNetworks(true);
   } 
+  else 
+  {
+    Udp.begin(recievePort);
+    Serial.print("Local port: ");
+    Serial.println(Udp.localPort());
+    Serial.println("waiting for sync");
+    setSyncProvider(getNtpTime);
+    setSyncInterval(2);
+    while (year() == 1970)
+    {
+      //wait until first time sync    
+    }
+    setSyncInterval(300);
+    
+    
+    Serial.println(now());
+    breakTime((now() + config.timezone + getDSTofset()),Time);
+    //CurrentDay=Time.Day;
+
+    otaUpdate();
+  }
+
   
-  configTime(TZ_SEC, DST_SEC, config.ntpserver);
+
   
   initWebServer();
 }
 
 void loop()
 {
- 
-  now = time(nullptr);
+  if (now() != CurrentTime)
+  {
+    //New Seccond
+    CurrentTime = now();
+    breakTime((now() + config.timezone + getDSTofset()),Time);
+    
+  }
+  
 
   webServer.handleClient();
 
-  if (digitalRead(resetPin) == LOW){
-    if (resetActive)
-    {
-      if (millis() - resetStart > 2000)
-      {
-        Serial.println(F("Reset started"));
-      }
-    } 
-    else 
-    {
-      resetActive = true;
-      resetStart = millis();
-    }
-  } 
-  else 
-  {
-    resetActive = false;
-  }
+  checkReset();
 }

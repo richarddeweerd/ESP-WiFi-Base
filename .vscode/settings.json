@@ -1,0 +1,9 @@
+{
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "files.associations": {
+        "xstring": "cpp",
+        "xutility": "cpp",
+        "system_error": "cpp",
+        "utility": "cpp"
+    }
+}
