@@ -66,18 +66,16 @@ void EspConfig::setVersion(int _value){
 }
 
 void EspConfig::setDevicename(String _value){
-  _value.toCharArray(devicename, sizeof(devicename));
-  writeStr("devicename", _value);
+  String tempname(devicename);
+  if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(devicename, sizeof(devicename));
+    writeStr("devicename", _value);
+  }
 }
 
-byte EspConfig::checkDevicename(String _value){
+String EspConfig::checkDevicename(String _value){
   //check if name is valid
-  //errorcodes:
-  //
-  // 0 = Ok
-  // 1 = illegal character
-  // 2 = name too short
-  // 3 = name too long
 
   #define minlen 1
   #define maxlen 32
@@ -98,27 +96,21 @@ byte EspConfig::checkDevicename(String _value){
     }
   }
   if (errorfound) {
-    return 1;
+    return "This devicename has illegal character(s)";
   } else {
     if (_value.length() < minlen) {
-      return 2;
+      return "This devicename is too short";
     } else {
       if (_value.length() > maxlen) {  
-        return 3;
+        return "This devicename is too long";
       } 
     }
   }
-  return 0;
+  return "";
 }
 
-byte EspConfig::checkUsername(String _value){
+String EspConfig::checkUsername(String _value){
   //check if username is valid
-  //errorcodes:
-  //
-  // 0 = Ok
-  // 1 = illegal character
-  // 2 = name too short
-  // 3 = name too long
   
   #define minlen 3
   #define maxlen 20
@@ -130,79 +122,93 @@ byte EspConfig::checkUsername(String _value){
     }
   }
   if (errorfound) {
-    return 1;
+    return "The username has illegal character(s)";
   } else {
     if (_value.length() < minlen) {
-      return 2;
+      return "The username is too short";
     } else {
       if (_value.length() > maxlen) {  
-        return 3;
+        return "The username is too long";
       } 
     }
   }
-  return 0;  
+  return "";  
 }
 
-byte EspConfig::checkUserpass(String _value, String _value2){
+String EspConfig::checkUserpass(String _value, String _value2){
   //check if passwords are valid
-  //errorcodes:
-  //
-  // 0 = Ok
-  // 1 = passwords are not the same
-  // 2 = passwords too short
-  // 3 = passwords too long
-  
+ 
   #define minlen 3
   #define maxlen 20
 
   bool errorfound = false;
   if (_value != _value2) {
-    return 1;
+    return "The passwords are not the same";
   }
   if (_value.length() < minlen) {
-    return 2;
+    return "The password is too short";
   } else {
     if (_value.length() > maxlen) {  
-      return 3;
+      return "The password is too long";
     } 
   }
-  return 0;  
+  return "";
 }
 
 void EspConfig::setUsername(String _value){
-  _value.toCharArray(username, sizeof(username));
-  writeStr("username", _value);
+  String tempname(username);
+  if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(username, sizeof(username));
+    writeStr("username", _value);
+  }
 }
 
 void EspConfig::setUserpass(String _value){
-  _value.toCharArray(userpass, sizeof(userpass));
-  writeStr("userpass", _value);
+  String tempname(userpass);
+    if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(userpass, sizeof(userpass));
+    writeStr("userpass", _value);
+  }
 }
 
 void EspConfig::setNtpServer(String _value){
-  _value.toCharArray(ntpserver, sizeof(ntpserver));
-  writeStr("ntp", _value);
+  String tempname(ntpserver);
+    if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(ntpserver, sizeof(ntpserver));
+    writeStr("ntp", _value);
+  }  
 }
 
 void EspConfig::setDhcp(bool _value){
-  dhcp = _value;
-  writeBool("dhcp", _value);
+  if (dhcp != _value){
+    dhcp = _value;
+    writeBool("dhcp", _value);
+  }
 }
 
 void EspConfig::setAutoDst(bool _value){
-  autodst = _value;
-  writeBool("autodst", _value);
+  if (autodst != _value){
+    autodst = _value;
+    writeBool("autodst", _value);
+  }
 }
 
 
 void EspConfig::setDst(int _value){
-  dstoffset = _value;
-  writeInt("dst", _value);
+  if (dstoffset != _value){
+    dstoffset = _value;
+    writeInt("dst", _value);
+  }
 }
 
 void EspConfig::setTimeZone(int _value){
-  timezone= _value;
-  writeInt("timezone", _value);
+  if (timezone != _value){
+    timezone= _value;
+    writeInt("timezone", _value);
+  }
 }
 
 

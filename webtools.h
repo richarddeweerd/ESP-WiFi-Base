@@ -23,7 +23,7 @@ String htmlHead(String pagename, byte refresh = 0, String target = "")
 
 String topMenu(byte selecteditem = 0)
 {
-  String msg = F("<nav>\n<ul>\n");
+  String msg = F("<nav role=\"main\">\n<ul>\n");
   msg += F("<li><a ");
   if (selecteditem == 1)
   {
@@ -51,7 +51,7 @@ String topMenu(byte selecteditem = 0)
   {
     msg += F("class=\"active\" ");
   }
-  msg += F("href=\"/config\">Configuration</a></li>\n");
+  msg += F("href=\"/settings\">Configuration</a></li>\n");
 
 
   msg += F("</ul>\n</nav>\n");
@@ -83,16 +83,24 @@ void handleCSS()
   String message = F("body { background-color: white;font-family: Arial, sans-serif;}");
   message += F("h1 { color: black; }");
   message += F("p { color: black; font-family: Arial, sans-serif;}");
-  message += F("ul {list-style-type: none; margin: 0; padding: 0; overflow: hidden; background-color: #333; font-family: Arial, sans-serif;}");
+
+  message += F("nav[role=\"main\"] ul li {background-color:#333;}");
+  message += F("nav[role=\"side\"] ul li {background-color:#777;width:200px;}");
+  message += F("nav[role=\"main\"] ul {background-color: #333;}");
+  message += F("nav[role=\"side\"] ul {height: 100%; width:200px; position: fixed;}");
+  message += F("nav[role=\"side\"] a{text-align: left;}");
+  message += F("nav[role=\"main\"] a{text-align: center;}");
+  message += F("ul {list-style-type: none; margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif;}");
   message += F("li {float: left;}");
-  message += F("li a {display: block; color: white; text-align: center; padding: 14px 16px; text-decoration: none; font-family: Arial, sans-serif;}");
+  message += F("li a {display: block; color: white; padding: 14px 16px; text-decoration: none; font-family: Arial, sans-serif;}");
   message += F("li a:hover:not(.active){background-color: #111;}");
   message += F(".active {background-color: #2f6dd8;}");
   message += F(".main {background-color: #2f6dd8;padding: 10px;}");
   message += F(".bcell {text-align: right;align:right;}");
-  message += F("#main { width: 100%; border: 1px solid black;overflow: hidden;}");
-  message += F("#sidemenu { width: 200px; float:left; border: 1px solid red;}");
-  message += F("#content { border: 1px solid greed;overflow: hidden;}");
+
+  message += F("#main { width: 100%;overflow: hidden;}");
+  message += F("#sidemenu { width: 200px; float:left;}");
+  message += F("#content { overflow: hidden; margin-left:200px;}");
 
   webServer.send(200, F("text/css"), message);
   digitalWrite(led, 1);
@@ -132,6 +140,7 @@ String buildConfigPage(byte page, String pagename, String content)
   msg += topMenu(9);
   msg += F("<div id=main>");
   msg += F("<div id=sidemenu>");
+  msg += F("<nav role=\"side\">");
   msg += F("<ul>\n");
 
   msg += F("<li><a ");
@@ -139,31 +148,31 @@ String buildConfigPage(byte page, String pagename, String content)
   {
     msg += F("class=\"active\" ");
   }
-  msg += F("href=\"/general\">General</a></li>\n");
+  msg += F("href=\"/settings?page=0\">General</a></li>\n");
 
   msg += F("<li><a ");
   if (page == 1)
   {
     msg += F("class=\"active\" ");
   }
-  msg += F("href=\"/wifi\">WiFi</a></li>\n");
+  msg += F("href=\"/settings?page=1\">WiFi</a></li>\n");
 
   msg += F("<li><a ");
   if (page == 2)
   {
     msg += F("class=\"active\" ");
   }
-  msg += F("href=\"/ipconfig\">IP address</a></li>\n");
+  msg += F("href=\"/settings?page=2\">IP address</a></li>\n");
 
   msg += F("<li><a ");
   if (page == 3)
   {
     msg += F("class=\"active\" ");
   }
-  msg += F("href=\"/time\">Time</a></li>\n");
+  msg += F("href=\"/settings?page=3\">Time</a></li>\n");
 
   msg += F("</ul>\n");
-
+  msg += F("</nav>");
   msg += F("</div>");
   msg += F("<div id=content>");
   msg += content;

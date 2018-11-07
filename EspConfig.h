@@ -37,12 +37,10 @@ public:
   void setSubnet(IPAddress _value);
   void setDns0(IPAddress _value);
   void setDns1(IPAddress _value);
-
-
   
-  byte checkDevicename(String _value);
-  byte checkUsername(String _value);
-  byte checkUserpass(String _value, String _value2);
+  String checkDevicename(String _value);
+  String checkUsername(String _value);
+  String checkUserpass(String _value, String _value2);
   void dbg();
 
   int cfgversion;

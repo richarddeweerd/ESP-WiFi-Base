@@ -207,7 +207,6 @@ void handleConnect()
   digitalWrite(led, 1);
 }
 
-
 void handleIpSetup()
 {
   if (!webServer.authenticate(config.username, config.userpass))
@@ -538,6 +537,9 @@ void handleInstall()
   bool errorfound = false;
   String errormsg = "";
   String message = "";
+  String err_dev;
+  String err_user;
+  String err_pass;
 
   if (webServer.method() == HTTP_POST)
   {
@@ -551,28 +553,13 @@ void handleInstall()
     {
       String devname = webServer.arg("devicename");
       devname.trim();
-
-      byte err = config.checkDevicename(devname);
-      if (err == 0)
+      
+      String err_dev = config.checkDevicename(devname);
+      if (err_dev == "")
       {
         //name ok, save
         config.setDevicename(devname);
         page++;
-      }
-      else
-      {
-        switch (err)
-        {
-        case 1:
-          errormsg = "This devicename has illegal character(s)";
-          break;
-        case 2:
-          errormsg = "This devicename is too short";
-          break;
-        case 3:
-          errormsg = "This devicename is too long";
-          break;
-        }
       }
     }
     else if (page == pageAccount)
@@ -580,48 +567,16 @@ void handleInstall()
       String usrname = webServer.arg("username");
       usrname.trim();
 
-      byte erruser = config.checkUsername(usrname);
-      byte errpass = config.checkUserpass(webServer.arg("pwd1"), webServer.arg("pwd2"));
+      err_user = config.checkUsername(usrname);
+      err_pass = config.checkUserpass(webServer.arg("pwd1"), webServer.arg("pwd2"));
 
-      if ((erruser == 0) && (errpass == 0))
+
+      if ((err_user == "") && (err_pass == ""))
       {
         //Data is ok saving
         config.setUsername(usrname);
         config.setUserpass(webServer.arg("pwd1"));
         page = 101;
-      }
-      else
-      {
-        if (erruser > 0)
-        {
-          switch (erruser)
-          {
-          case 1:
-            errormsg = "The username has illegal character(s)";
-            break;
-          case 2:
-            errormsg = "The username is too short";
-            break;
-          case 3:
-            errormsg = "The username is too long";
-            break;
-          }
-        }
-        else
-        {
-          switch (errpass)
-          {
-          case 1:
-            errormsg = "The passwords are not the same";
-            break;
-          case 2:
-            errormsg = "The password is too short";
-            break;
-          case 3:
-            errormsg = "The password is too long";
-            break;
-          }
-        }
       }
     }
     else if (page == pageWifi)
@@ -1017,7 +972,7 @@ void handleInstall()
 
     content += F("</table>\n");
 
-    message = buildInstallPage(htmlHead("Install - Step " + String(pageAccount)), pageAccount, lastpage, content, errormsg);
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageAccount)), pageAccount, lastpage, content, err_user + " " + err_pass);
   }
 
   if (page == pageDevicename)
@@ -1034,7 +989,7 @@ void handleInstall()
     content += F("</tr>\n");
     content += F("</table>\n");
 
-    message = buildInstallPage(htmlHead("Install - Step " + String(pageDevicename)), pageDevicename, lastpage, content, errormsg);
+    message = buildInstallPage(htmlHead("Install - Step " + String(pageDevicename)), pageDevicename, lastpage, content, err_dev);
   }
 
   if (page == 0)
@@ -1077,12 +1032,12 @@ void handleNetworkSettings()
     message += F("<td><input type=\"text\" name=\"wifissid\" value=\"");
     message += WiFi.SSID();
     message += F("\"></td>\n</tr>\n");
-    
+
     message += F("<tr>\n");
     message += F("<td>WiFi password</td>\n");
     message += F("<td><input type=\"password\" name=\"wifipass\" ></td>\n");
     message += F("</tr>\n");
-    
+
     message += F("<tr>\n");
     message += F("<td>Retype password</td>\n");
     message += F("<td><input type=\"password\" name=\"wifipass2\" ></td>\n");
@@ -1276,24 +1231,142 @@ void handleSettings()
     return webServer.requestAuthentication();
 
   digitalWrite(led, 0);
-  #define cfgGeneral 0
-  #define cfgWifi 1
-  #define cfgNetwork 2
-  #define cfgTime 3
+#define cfgGeneral 0
+#define cfgWifi 1
+#define cfgNetwork 2
+#define cfgTime 3
 
   int page = webServer.arg("page").toInt();
   String message = "";
+  String err_dev;
+  String err_user;
+  String err_pass;
+
+  bool save = false;
 
   if (webServer.method() == HTTP_POST)
   {
     //save
-  }
-  else
-  {
-    //showpage
-    message += buildConfigPage(1, "General Settings", "Page content");
+    save = true;
+
+    if (page == cfgGeneral)
+    {
+      String devname = webServer.arg("devicename");
+      String usrname = webServer.arg("username");
+      String pwd1 = webServer.arg("pwd1");
+      devname.trim();
+      usrname.trim();
+      pwd1.trim();
+
+      err_dev = config.checkDevicename(devname);
+      err_user = config.checkUsername(usrname);
+      err_pass = "";
+
+      if (pwd1.length() > 1)
+      {
+        err_pass = config.checkUserpass(webServer.arg("pwd1"), webServer.arg("pwd2"));
+      }
+
+      if (err_dev == "")
+      {
+        //name ok, save
+        config.setDevicename(devname);
+      }
+
+      if (err_user == "0")
+      {
+        //Data is ok saving
+        config.setUsername(usrname);
+      }
+
+      if ((err_pass == "") && (pwd1.length() > 1))
+      {
+        //Data is ok saving
+        config.setUserpass(webServer.arg("pwd1"));
+      }
+    }
   }
 
+  //showpage
+
+  if (page == cfgGeneral)
+  {
+    String content;
+    if (err_dev != ""){
+      content += err_dev + "\n";
+    }
+    if (err_user != ""){
+      content += err_user + "\n";
+    }
+    if (err_pass != ""){
+      content += err_pass + "\n";
+    }
+    content += "<form action=\"/settings?page=" + String(page) + "\" method=\"post\">\n";
+    content += F("<table>\n");
+    content += F("<tr>\n");
+    content += F("<td>Device name:</td>\n");
+    content += F("<td><input type=\"text\" name=\"devicename\" value=\"");
+    content += config.devicename;
+    content += F("\"></td>\n");
+    content += F("</tr>\n");
+    content += F("<tr>\n");
+    content += F("<td>Username:</td>\n");
+    content += F("<td><input type=\"text\" name=\"username\" value=\"");
+    content += config.username;
+    content += F("\"></td>\n");
+    content += F("</tr>\n");
+
+    content += F("<tr>\n");
+    content += F("<td>Password:</td>\n");
+    content += F("<td><input type=\"password\" name=\"pwd1\"></td>\n");
+    content += F("</tr>\n");
+
+    content += F("<tr>\n");
+    content += F("<td>Reypte Password:</td>\n");
+    content += F("<td><input type=\"password\" name=\"pwd2\"></td>\n");
+    content += F("</tr>\n");
+    content += F("<tr>\n");
+    content += F("<td colspan=2>");
+    content += F("<table width=100%>\n<tr>\n");
+    content += F("<td width=50% align='center'>");
+    content += F("<button id='cancelbutton' type='reset' value='Reset'>Reset</button>");
+
+    content += F("</td>\n");
+    content += F("<td width=50% align='center'>");
+    content += F("<button id='savebutton' type='submit' value='Submit'>Save</button>");
+    content += F("</td>\n");
+
+    content += F("</tr>\n");
+    content += F("</table>\n");
+
+    content += F("</td>\n");
+
+    content += F("</tr>\n");
+
+    content += F("</table>\n");
+    content += F("</form>\n");
+
+    message += buildConfigPage(page, "General Settings", content);
+  }
+
+  if (page == cfgWifi)
+  {
+    String content;
+    content = "Wifi page";
+    message += buildConfigPage(page, "General Settings", content);
+  }
+  if (page == cfgNetwork)
+  {
+    String content;
+    content = "Network page";
+    message += buildConfigPage(page, "General Settings", content);
+  }
+  if (page == cfgTime)
+  {
+    String content;
+    content = "Time page";
+    message += buildConfigPage(page, "General Settings", content);
+  }
 
   webServer.send(200, F("text/html"), message);
   digitalWrite(led, 1);
@@ -1331,10 +1404,9 @@ void initWebServer()
     webServer.on("/", handleRoot);
     webServer.on("/css", handleCSS);
     //webServer.on("/ip", handleWifiSetup);
-//    webServer.on("/network", handleNetworkSettings);
+    //    webServer.on("/network", handleNetworkSettings);
     webServer.on("/settings", handleSettings);
     //webServer.on("/ipconfig", handleIpSetup);
-
 
     //webServer.on ( "/connect", handleConnect );
 
