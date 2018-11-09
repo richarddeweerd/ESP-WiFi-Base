@@ -57,7 +57,7 @@ void setup()
   
 
   
-  if (WiFi.SSID().length() > 0)
+  if ((WiFi.SSID().length() > 0)&& (config.stat == true))
   {
     //WiFi config available
     WiFi.mode(WIFI_STA);

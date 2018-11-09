@@ -8,7 +8,7 @@ Library for storing the config on a esp8266
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 
-#define configVersion 2
+#define configVersion 3
 
 #define default_username "admin"
 #define default_devicename "ESP-Demo"
@@ -27,6 +27,8 @@ public:
   void setNtpServer(String _value);
 
   void setDhcp(bool _value);
+  void setStat(bool _value);
+
   void setAutoDst(bool _value);
 
   void setDst(int _value);
@@ -52,6 +54,7 @@ public:
 
   bool dhcp;
   bool autodst;
+  bool stat;
 
   int timezone;
   int dstoffset;

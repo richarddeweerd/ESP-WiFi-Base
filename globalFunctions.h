@@ -16,6 +16,7 @@ void checkReset()
         WiFi.setAutoConnect(false);
         WiFi.disconnect(true);
         Serial.println(F("Rebooting"));
+        delay(2000);
         ESP.restart();
       }
     } 

@@ -696,6 +696,7 @@ void handleInstall()
         webServer.handleClient();
       }
       Serial.println(F("Rebooting"));
+      config.setStat(true);
       ESP.restart();
     }
   }

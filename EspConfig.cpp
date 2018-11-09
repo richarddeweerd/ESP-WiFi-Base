@@ -15,6 +15,7 @@ void EspConfig::init(){
 
   cfgversion = readInt("version");
   if (cfgversion == configVersion){
+    stat = readBool("status");
     readStr("devicename").toCharArray(devicename, sizeof(devicename));
     readStr("username").toCharArray(username, sizeof(username));
     readStr("userpass").toCharArray(userpass, sizeof(userpass));
@@ -43,6 +44,7 @@ void EspConfig::init(){
 
 void EspConfig::createConfig(){
   setVersion(configVersion);
+  setStat(false);
 
   setDevicename(default_devicename);
   setUsername(default_username);
@@ -196,6 +198,12 @@ void EspConfig::setAutoDst(bool _value){
   }
 }
 
+void EspConfig::setStat(bool _value){
+  if (stat != _value){
+    stat = _value;
+    writeBool("status", _value);
+  }
+}
 
 void EspConfig::setDst(int _value){
   if (dstoffset != _value){
