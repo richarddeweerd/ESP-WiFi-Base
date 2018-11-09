@@ -15,6 +15,7 @@ void EspConfig::init(){
 
   cfgversion = readInt("version");
   if (cfgversion == configVersion){
+    stat = readBool("status");
     readStr("devicename").toCharArray(devicename, sizeof(devicename));
     readStr("username").toCharArray(username, sizeof(username));
     readStr("userpass").toCharArray(userpass, sizeof(userpass));
@@ -25,6 +26,9 @@ void EspConfig::init(){
     gw = readIp("gateway");
     ns0 = readIp("dns0");
     ns1 = readIp("dns1");
+    autodst=readBool("autodst");
+    timezone=readInt("timezone");
+    dstoffset=readInt("dst");
   } else{
     readError = true;
   }
@@ -34,22 +38,22 @@ void EspConfig::init(){
     Serial.println(F("Error reading config files."));
     createConfig();
   }
-
-  //createConfig();
-
 }
 
 
 
 void EspConfig::createConfig(){
   setVersion(configVersion);
+  setStat(false);
 
   setDevicename(default_devicename);
   setUsername(default_username);
   setUserpass("");
   setNtpServer(default_ntp);
-
-  setDhcp(true);  
+  setAutoDst(true);
+  setDhcp(true);
+  setDst(3600);
+  setTimeZone(3600);
   setIpAddress({0, 0, 0, 0});
   setSubnet({0, 0, 0, 0});
   setGateway({0, 0, 0, 0});
@@ -64,29 +68,157 @@ void EspConfig::setVersion(int _value){
 }
 
 void EspConfig::setDevicename(String _value){
-  _value.toCharArray(devicename, sizeof(devicename));
-  writeStr("devicename", _value);
+  String tempname(devicename);
+  if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(devicename, sizeof(devicename));
+    writeStr("devicename", _value);
+  }
+}
+
+String EspConfig::checkDevicename(String _value){
+  //check if name is valid
+
+  #define minlen 1
+  #define maxlen 32
+  
+  bool errorfound = false;
+  for (byte i = 0; i < _value.length(); i++) {    
+    if (!isAlphaNumeric(_value.charAt(i))) {
+      // not alpha numeric
+      if (i > 0) {
+
+        if ((_value.charAt(i) != '-') && (_value.charAt(i) != '_')) {
+          errorfound = true;
+        }       
+      }
+      else {
+        errorfound = true;
+      }
+    }
+  }
+  if (errorfound) {
+    return "This devicename has illegal character(s)";
+  } else {
+    if (_value.length() < minlen) {
+      return "This devicename is too short";
+    } else {
+      if (_value.length() > maxlen) {  
+        return "This devicename is too long";
+      } 
+    }
+  }
+  return "";
+}
+
+String EspConfig::checkUsername(String _value){
+  //check if username is valid
+  
+  #define minlen 3
+  #define maxlen 20
+
+  bool errorfound = false;
+  for (byte i = 0; i < _value.length(); i++) {    
+    if (!isAlphaNumeric(_value.charAt(i))) {
+      errorfound = true;
+    }
+  }
+  if (errorfound) {
+    return "The username has illegal character(s)";
+  } else {
+    if (_value.length() < minlen) {
+      return "The username is too short";
+    } else {
+      if (_value.length() > maxlen) {  
+        return "The username is too long";
+      } 
+    }
+  }
+  return "";  
+}
+
+String EspConfig::checkUserpass(String _value, String _value2){
+  //check if passwords are valid
+ 
+  #define minlen 3
+  #define maxlen 20
+
+  bool errorfound = false;
+  if (_value != _value2) {
+    return "The passwords are not the same";
+  }
+  if (_value.length() < minlen) {
+    return "The password is too short";
+  } else {
+    if (_value.length() > maxlen) {  
+      return "The password is too long";
+    } 
+  }
+  return "";
 }
 
 void EspConfig::setUsername(String _value){
-  _value.toCharArray(username, sizeof(username));
-  writeStr("username", _value);
+  String tempname(username);
+  if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(username, sizeof(username));
+    writeStr("username", _value);
+  }
 }
 
 void EspConfig::setUserpass(String _value){
-  _value.toCharArray(userpass, sizeof(userpass));
-  writeStr("userpass", _value);
+  String tempname(userpass);
+    if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(userpass, sizeof(userpass));
+    writeStr("userpass", _value);
+  }
 }
 
 void EspConfig::setNtpServer(String _value){
-  _value.toCharArray(ntpserver, sizeof(ntpserver));
-  writeStr("ntp", _value);
+  String tempname(ntpserver);
+    if (tempname !=  _value){
+    //Data is changed
+    _value.toCharArray(ntpserver, sizeof(ntpserver));
+    writeStr("ntp", _value);
+  }  
 }
 
 void EspConfig::setDhcp(bool _value){
-  dhcp = _value;
-  writeBool("dhcp", _value);
+  if (dhcp != _value){
+    dhcp = _value;
+    writeBool("dhcp", _value);
+  }
 }
+
+void EspConfig::setAutoDst(bool _value){
+  if (autodst != _value){
+    autodst = _value;
+    writeBool("autodst", _value);
+  }
+}
+
+void EspConfig::setStat(bool _value){
+  if (stat != _value){
+    stat = _value;
+    writeBool("status", _value);
+  }
+}
+
+void EspConfig::setDst(int _value){
+  if (dstoffset != _value){
+    dstoffset = _value;
+    writeInt("dst", _value);
+  }
+}
+
+void EspConfig::setTimeZone(int _value){
+  if (timezone != _value){
+    timezone= _value;
+    writeInt("timezone", _value);
+  }
+}
+
 
 void EspConfig::setIpAddress(IPAddress _value){
   for (byte i = 0; i < 4; i++ ){
